@@ -126,6 +126,7 @@ decodeSignedObject :: (Show a, Eq a, ASN1Object a)
 decodeSignedObject b = either (Left . show) parseSigned $ decodeASN1Repr' BER b
   where -- the following implementation is very inefficient.
         -- uses reverse and containing, move to a better solution eventually
+        parseSigned :: (Show a, Eq a, ASN1Object a) => [ASN1Repr] -> Either String (SignedExact a)
         parseSigned l = onContainer (fst $ getConstructedEndRepr l) $ \l2 ->
             let (objRepr,rem1)   = getConstructedEndRepr l2
                 (sigAlgSeq,rem2) = getConstructedEndRepr rem1
@@ -150,6 +151,7 @@ decodeSignedObject b = either (Left . show) parseSigned $ decodeASN1Repr' BER b
                     (Right (_,remObj), _) ->
                         Left $ ("signed object error: remaining stream in object: " ++ show remObj)
                     (Left err, _) -> Left $ ("signed object error: " ++ show err)
+        onContainer :: [ASN1Repr] -> ([ASN1Repr] -> Either String t) -> Either String t
         onContainer ((Start _, _) : l) f =
             case reverse l of
                 ((End _, _) : l2) -> f $ reverse l2
